@@ -104,9 +104,8 @@ curl -s http://localhost:3000/health
 Требуется Node 22+ и PostgreSQL 16.
 
 ```cmd
-createdb -U postgres llm_meter
-psql -U postgres -d llm_meter -c "CREATE USER llm_meter WITH PASSWORD 'llm_meter';"
-psql -U postgres -d llm_meter -c "GRANT ALL ON DATABASE llm_meter TO llm_meter;"
+psql -U postgres -c "CREATE ROLE llm_meter LOGIN PASSWORD 'llm_meter';"
+psql -U postgres -c "CREATE DATABASE llm_meter OWNER llm_meter;"
 ```
 
 ```cmd
@@ -128,7 +127,7 @@ docker compose up -d
 
 Поднимается `db` (postgres:16-alpine) и `api` (node:22-alpine), который выполняет `npm ci && npm run build && npm run migrate && npm start`. Переменные `JWT_SECRET`, `LOGIN`, `PASSWORD_HASH` compose берёт из окружения (есть дефолты `change-me` / `admin` / пустой хэш), при этом `.env` в корне проекта compose подхватывает сам. Миграции и seed используют один и тот же `DATABASE_URL`, никаких правок кода между вариантами не нужно.
 
-`npm ci` требует `package-lock.json`: создайте его один раз командой `npm install` на хосте (в репозиторий файл не входит) или замените в `docker-compose.yml` `npm ci` на `npm install`.
+`package-lock.json` лежит в репозитории, так что `npm ci` в контейнере ставит ровно те версии, что проверялись локально.
 
 **Проверено на нативном PostgreSQL 16. `docker compose` не проверялся** — конфигурация собрана по документации, но вживую не запускалась.
 
