@@ -1,11 +1,23 @@
+import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { closePool, query, withTransaction } from "../src/db.js";
 
-const migrationsDir = fileURLToPath(new URL("../../db/migrations/", import.meta.url));
+// dist/scripts/migrate.js resolves two levels up, scripts/migrate.ts (vitest) one level up.
+const migrationsDir = ["../../db/migrations/", "../db/migrations/"]
+  .map((relative) => fileURLToPath(new URL(relative, import.meta.url)))
+  .find((dir) => existsSync(dir));
 
-async function main(): Promise<void> {
+if (!migrationsDir) {
+  throw new Error(`db/migrations not found next to ${import.meta.url}`);
+}
+
+// Явный тип: narrowing не переносится в тело функции.
+const migrationsPath: string = migrationsDir;
+
+
+export async function runMigrations(): Promise<void> {
   await query(
     `CREATE TABLE IF NOT EXISTS schema_migrations (
        name text PRIMARY KEY,
@@ -16,7 +28,7 @@ async function main(): Promise<void> {
   const applied = await query<{ name: string }>("SELECT name FROM schema_migrations");
   const appliedNames = new Set(applied.rows.map((row) => row.name));
 
-  const files = (await readdir(migrationsDir)).filter((file) => file.endsWith(".sql")).sort();
+  const files = (await readdir(migrationsPath)).filter((file) => file.endsWith(".sql")).sort();
 
   for (const file of files) {
     if (appliedNames.has(file)) {
@@ -24,7 +36,7 @@ async function main(): Promise<void> {
       continue;
     }
 
-    const sql = await readFile(path.join(migrationsDir, file), "utf8");
+    const sql = await readFile(path.join(migrationsPath, file), "utf8");
     await withTransaction(async (client) => {
       await client.query(sql);
       await client.query("INSERT INTO schema_migrations (name) VALUES ($1)", [file]);
@@ -33,11 +45,16 @@ async function main(): Promise<void> {
   }
 }
 
-try {
-  await main();
-} catch (error) {
-  console.error(error);
-  process.exitCode = 1;
-} finally {
-  await closePool();
+// Run as a CLI (`npm run migrate`) only when executed directly; tests import runMigrations().
+const isMain = process.argv[1] !== undefined && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMain) {
+  try {
+    await runMigrations();
+  } catch (error) {
+    console.error(error);
+    process.exitCode = 1;
+  } finally {
+    await closePool();
+  }
 }

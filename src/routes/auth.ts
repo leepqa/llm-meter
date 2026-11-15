@@ -20,6 +20,10 @@ const authRoutes: FastifyPluginAsync = async (app) => {
       throw new Error("LOGIN / PASSWORD_HASH are not set");
     }
 
+    if (!login || !password) {
+      return reply.code(400).send({ error: "login and password are required" });
+    }
+
     const passwordMatches = await bcrypt.compare(password, expectedHash);
     if (login !== expectedLogin || !passwordMatches) {
       return reply.code(401).send({ error: "invalid credentials" });
