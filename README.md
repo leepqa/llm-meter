@@ -4,6 +4,10 @@
 
 Стек: TypeScript, Node 22, Fastify 4, PostgreSQL 16, `pg` (чистый SQL), `@fastify/jwt`, `bcryptjs`. ORM нет, миграции — обычные `.sql` файлы.
 
+![Дашборд](docs/dashboard.png)
+
+Дашборд показывает: карточки с ключевыми метриками (токены, стоимость, средняя задержка, доля ошибок), график стоимости по дням, график расходов по моделям и таблицу событий с фильтрами по модели и статусу и пагинацией по 50 записей.
+
 ## Схема БД
 
 `models` — справочник моделей и цены (рубли за 1M токенов):
@@ -140,3 +144,19 @@ node -e "console.log(require('bcryptjs').hashSync('admin',10))"
 ```
 
 Полученную строку (`$2a$10$...`) положите в `PASSWORD_HASH`. В `.env` символы `$` экранировать не нужно.
+
+## Фронтенд
+
+SPA на React 18 + TypeScript (Vite, Recharts) лежит в подпапке `web/` и собирается независимо от бэкенда:
+
+```bash
+cd web
+npm install
+npm run dev    # http://localhost:5173
+npm run build  # tsc --noEmit && vite build, результат в web/dist
+```
+
+В dev-режиме Vite проксирует `/api/*` на `http://localhost:3000` и срезает префикс `/api` (у бэкенда его нет):
+`GET /api/stats?group=day` уходит на `GET http://localhost:3000/stats?group=day`.
+
+Токен, полученный в `POST /auth/login`, хранится в `localStorage` под ключом `llm_meter_token`.
