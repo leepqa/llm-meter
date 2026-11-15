@@ -1,0 +1,28 @@
+{
+  "name": "llm-meter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend of an LLM agent observability service: ingest, cost accounting, stats",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node --env-file-if-exists=.env dist/src/server.js",
+    "migrate": "node --env-file-if-exists=.env dist/scripts/migrate.js",
+    "seed": "node --env-file-if-exists=.env dist/scripts/seed.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@fastify/jwt": "8.0.1",
+    "bcryptjs": "2.4.3",
+    "fastify": "4.28.1",
+    "pg": "8.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "@types/pg": "8.11.10",
+    "typescript": "5.7.2"
+  }
+}

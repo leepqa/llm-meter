@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-llm_meter}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-llm_meter}
+      POSTGRES_DB: ${POSTGRES_DB:-llm_meter}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-llm_meter} -d ${POSTGRES_DB:-llm_meter}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: sh -c "npm ci && npm run build && npm run migrate && npm start"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://llm_meter:llm_meter@db:5432/llm_meter
+      JWT_SECRET: ${JWT_SECRET:-change-me}
+      LOGIN: ${LOGIN:-admin}
+      PASSWORD_HASH: ${PASSWORD_HASH:-}
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
