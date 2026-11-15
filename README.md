@@ -1,3 +1,5 @@
+![CI](https://github.com/leepqa/llm-meter/actions/workflows/ci.yml/badge.svg)
+
 # llm-meter
 
 Бэкенд сервиса наблюдаемости LLM-агентов: приём событий вызовов моделей, расчёт стоимости в рублях, выборка событий и агрегированная статистика.
@@ -120,6 +122,8 @@ npm run migrate
 npm run seed
 npm start
 ```
+
+Тесты API (Vitest + Supertest) идут на отдельной БД `llm_meter_test`: скопируйте `.env.test.example` в `.env.test`, создайте базу и запустите `npm test`. Миграции накатываются автоматически перед прогоном, dev-БД `llm_meter` не затрагивается.
 
 `npm run migrate` применяет `db/migrations/*.sql` по алфавиту (неприменённые — каждый в своей транзакции), `npm run seed` заливает 4 модели и 5000 событий за 30 дней (повторный запуск новых событий не добавляет). Порт и строка подключения берутся из `.env` (`PORT`, `DATABASE_URL`), `.env` читает сам Node через `--env-file-if-exists`.
 
